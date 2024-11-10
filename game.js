@@ -211,7 +211,7 @@ const player = new Sprite({
 
 // Initialize enemy character
 const enemy = new Sprite({
-    position: { x: 700, y: 0 },
+    position: { x: 1100, y: 0 },
     velocity: { x: 0, y: 0 },
     color: 'blue',
     offset: { x: -50, y: 0 },
@@ -300,14 +300,16 @@ function animate() {
 
     // Player movement handling with improved control
     player.velocity.x = 0; // Reset velocity before checking keys
-    if (keys.d.pressed) player.velocity.x = 1;
-    if (keys.a.pressed) player.velocity.x = -1;
+    if (keys.d.pressed) player.velocity.x = 3;
+    if (keys.a.pressed) player.velocity.x = -3;
 
     // Check for player hitting enemy
     if (
         player.currentAttack &&
         player.attackbox.position.x + player.attackbox.width >= enemy.position.x &&
-        player.attackbox.position.x <= enemy.position.x + enemy.width
+        player.attackbox.position.x <= enemy.position.x + enemy.width &&
+        player.attackbox.position.y + player.attackbox.height >= enemy.position.y &&
+        player.attackbox.position.y <= enemy.position.y + enemy.height
     ) {
         enemy.takeDamage(player.currentAttack === 'special' ? 20 : 10);
         player.currentAttack = null;
@@ -317,7 +319,9 @@ function animate() {
     if (
         enemy.currentAttack &&
         enemy.attackbox.position.x + enemy.attackbox.width >= player.position.x &&
-        enemy.attackbox.position.x <= player.position.x + player.width
+        enemy.attackbox.position.x <= player.position.x + player.width &&
+       enemy.attackbox.position.y +enemy.attackbox.height >= player.position.y &&
+       enemy.attackbox.position.y <= player.position.y + player.height
     ) {
         player.takeDamage(enemy.currentAttack === 'special' ? 20 : 10);
         enemy.currentAttack = null;
