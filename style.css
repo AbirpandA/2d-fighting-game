@@ -3,11 +3,33 @@ body {
     justify-content: center;
     align-items: center;
     height: 100vh;
+    background-color: #111;
     margin: 0;
-    background-color: #1e1e1e;
 }
 
-#gameCanvas {
-    border: 2px solid #fff;
-    background-color: #333;
+#healthContainer {
+    display: flex;
+    width: 100%;
+    height: 20px;
+    background-color: grey;
+    position: fixed;
+    top: 0;
+}
+
+#playerHealth {
+    background-color: green;
+    height: 100%;
+    width: 50%;
+    transition: width 0.2s ease;
+}
+
+#enemyHealth {
+    background-color: red;
+    height: 100%;
+    width: 50%;
+    transition: width 0.2s ease;
+}
+
+canvas {
+    border: 2px solid white;
 }
