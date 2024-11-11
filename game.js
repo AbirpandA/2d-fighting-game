@@ -17,7 +17,7 @@ const keys = {
 };
 
 // Main Sprite class for both player and enemy characters
-class Sprite {
+class fighter {
     constructor({ position, velocity, color = 'red', offset, health = 100 }) {
         // Basic character properties
         this.position = position;
@@ -63,10 +63,10 @@ class Sprite {
         // Draw attack animations
         if (this.isAttacking) {
             c.fillStyle = 'yellow';  // Normal attack visualization
-            c.fillRect(this.attackbox.position.x, this.attackbox.position.y, this.attackbox.width, this.attackbox.height);
+            c.fillRect(this.attackbox.position.x, this.attackbox.position.y, this.attackbox.width*1.3, this.attackbox.height);
         } else if (this.isSpecialAttacking) {
             c.fillStyle = 'orange';  // Special attack visualization
-            c.fillRect(this.attackbox.position.x, this.attackbox.position.y, this.attackbox.width * 1.5, this.attackbox.height);
+            c.fillRect(this.attackbox.position.x, this.attackbox.position.y, this.attackbox.width , this.attackbox.height);
         }
 
         c.globalAlpha = 1;  // Reset transparency
@@ -88,6 +88,7 @@ class Sprite {
 
     // Execute normal attack
     attack() {
+        if(this.stunned) return;
         this.isAttacking = true;
         this.currentAttack = 'normal';
         // Reset attack state after delay
@@ -99,13 +100,14 @@ class Sprite {
 
     // Execute special attack
     specialAttack() {
+        if(this.stunned) return;
         this.isSpecialAttacking = true;
         this.currentAttack = 'special';
         // Reset attack state after delay
         setTimeout(() => {
             this.isSpecialAttacking = false;
             this.currentAttack = null;
-        }, 120);
+        }, 150);
     }
 
     // Enemy AI decision making and actions
@@ -196,12 +198,17 @@ class Sprite {
 
         // Update effect timers
         if (this.hitTimer > 0) this.hitTimer -= 0.1;
-        if (this.recoveryTime > 0) this.recoveryTime--;
+        if (this.recoveryTime > 0) {
+            this.recoveryTime--;
+            if(this.recoveryTime<=0){
+                this.stunned=false;
+            }
+        }
     }
 }
 
 // Initialize player character
-const player = new Sprite({
+const player = new fighter({
     position: { x: 50, y: 0 },
     velocity: { x: 0, y: 0 },
     color: 'red',
@@ -210,7 +217,7 @@ const player = new Sprite({
 });
 
 // Initialize enemy character
-const enemy = new Sprite({
+const enemy = new fighter({
     position: { x: 1100, y: 0 },
     velocity: { x: 0, y: 0 },
     color: 'blue',
