@@ -41,23 +41,61 @@ const keys = {
 
 
 // Initialize player character
-const player = new fighter({
+const player = new Fighter({
     position: { x: 50, y: groundLevel - 150 },
     velocity: { x: 0, y: 0 },
     color: 'red',
-    offset: { x: 0, y: 0 },
+    
+    imgSrc: '/sprites/player/idle.png', // Add your player sprite path here
+    scale: 2.5,
+    framesMax: 6,
     health: 100,
+    offset:{
+        x: 80 ,
+        y: 167,
+    },
+    sprites:{
+        idle:{
+            imgSrc:'/sprites/player/idle.png',
+            framesMax: 4,
+        },
+        run:{
+            imgSrc:'/sprites/player/run.png',
+            framesMax:7,
+        },
+        jump:{
+            imgSrc:'/sprites/player/jump.png',
+            framesMax:6,
+        }
+    }
 });
-console.log("Player:",player)
-// Initialize enemy character
-const enemy = new fighter({
+
+const enemy = new Fighter({
     position: { x: 1100, y: groundLevel - 150 },
     velocity: { x: 0, y: 0 },
-    color: 'blue',
     offset: { x: -80, y: 0 },
+    imgSrc: '/sprites/enemy/oidle.png',
+    scale: 2.5,
+    framesMax: 4,
     health: 100,
-    imgSrc:"/sprites/enemy/oidle",
-    framesMax:4,
+    offset:{
+        x: -80 ,
+        y: 63,
+    },
+    sprites:{
+        idle:{
+            imgSrc:'/sprites/enemy/oidle.png',
+            framesMax: 4,
+        },
+        run:{
+            imgSrc:'/sprites/enemy/run.png',
+            framesMax:7,
+        },
+        jump:{
+            imgSrc:'/sprites/enemy/jump.png',
+            framesMax:6,
+        }
+    }
 });
 const {position, velocity, color, offset, health, imgSrc, framesMax} = enemy;
 console.log("Enemy framesMax:", imgSrc)
@@ -175,8 +213,15 @@ function animate() {
 
     // Player movement handling with improved control
     player.velocity.x = 0; // Reset velocity before checking keys
-    if (keys.d.pressed) player.velocity.x = 3;
-    if (keys.a.pressed) player.velocity.x = -3;
+    if (keys.d.pressed){ 
+        player.velocity.x = 3
+        player.switchSprite('run')
+
+    };
+    if (keys.a.pressed) {
+        player.velocity.x = -3
+        player.switchSprite('run')    
+    };
 
     // Check for player hitting enemy
     if (
