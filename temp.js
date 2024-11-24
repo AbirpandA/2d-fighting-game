@@ -108,7 +108,7 @@ const enemy = new Fighter({
     health: 100,
     offset: {
         x: 215,
-        y: 167
+        y: 65
     },
     sprites: {
         idle: {
