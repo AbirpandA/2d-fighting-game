@@ -54,19 +54,47 @@ const player = new Fighter({
         x: 80 ,
         y: 167,
     },
-    sprites:{
-        idle:{
-            imgSrc:'/sprites/player/idle.png',
-            framesMax: 4,
+    sprites: {
+        idle: {
+            imgSrc: '/sprites/player/idle.png',
+            framesMax: 6
         },
-        run:{
-            imgSrc:'/sprites/player/run.png',
-            framesMax:7,
+        run: {
+            imgSrc: '/sprites/player/run.png',
+            framesMax: 8
         },
-        jump:{
-            imgSrc:'/sprites/player/jump.png',
-            framesMax:6,
+        jump: {
+            imgSrc: '/sprites/player/jump.png',
+            framesMax: 5
+        },
+        fall: {
+            imgSrc: '/sprites/player/fall.png',
+            framesMax: 4
+        },
+        attack1: {
+            imgSrc: '/sprites/player/attack1.png',
+            framesMax: 5
+        },
+        attack2: {
+            imgSrc: '/sprites/player/attack2.png',
+            framesMax: 4
+        },
+        takeHit: {
+            imgSrc: '/sprites/player/takeHit.png',
+            framesMax: 3
+        },
+        death: {
+            imgSrc: '/sprites/player/death.png',
+            framesMax: 6
         }
+    },
+    attackBox: {
+        offset: {
+            x: 100,
+            y: 50
+        },
+        width: 170,
+        height: 50
     }
 });
 
@@ -89,11 +117,11 @@ const enemy = new Fighter({
         },
         run:{
             imgSrc:'/sprites/enemy/run.png',
-            framesMax:7,
+            framesMax:8,
         },
         jump:{
             imgSrc:'/sprites/enemy/jump.png',
-            framesMax:6,
+            framesMax:9,
         }
     }
 });
