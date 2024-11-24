@@ -53,6 +53,7 @@ class Sprite {
     }
 }
 
+
 class Fighter extends Sprite {
     constructor({ 
         position, 
@@ -79,7 +80,6 @@ class Fighter extends Sprite {
         this.width = 50
         this.color = color
         
-        // Improved attack box configuration
         this.attackBox = {
             position: {
                 x: this.position.x,
@@ -106,7 +106,6 @@ class Fighter extends Sprite {
         this.sprites = sprites
         this.dead = false
         
-        // Animation state
         this.currentSprite = 'idle'
         this.animationFrame = 0
         this.animationTimer = 0
@@ -162,6 +161,7 @@ class Fighter extends Sprite {
         if (this.health <= 0) {
             this.health = 0
             this.switchSprite('death')
+            this.dead = true
         } else {
             this.switchSprite('takeHit')
         }
@@ -172,18 +172,47 @@ class Fighter extends Sprite {
         this.velocity.x = 0
     }
 
+    animateFrames() {
+        this.framesElapsed++
+
+        // Adjust animation speed based on action
+        let frameHoldValue = 5 // default speed
+
+        if (this.image === this.sprites.jump?.image) {
+            frameHoldValue = 8 // slower jump animation
+        } else if (this.image === this.sprites.fall?.image) {
+            frameHoldValue = 8 // slower fall animation
+        } else if (
+            this.image === this.sprites.attack1?.image || 
+            this.image === this.sprites.attack2?.image
+        ) {
+            frameHoldValue = 7 // slightly slower attack animations
+        }
+
+        this.framesHold = frameHoldValue
+
+        if (this.framesElapsed % this.framesHold === 0) {
+            if (this.framesCurrent < this.framesMax - 1) {
+                this.framesCurrent++
+            } else {
+                this.framesCurrent = 0
+            }
+        }
+    }
+
     update() {
         if (!this.dead) {
             this.updatePosition()
             this.updateAttackBox()
             this.updateAnimation()
+            if (this === enemy) {
+                this.performAIAction(player)
+            }
         }
-        
         this.draw()
     }
 
     updatePosition() {
-        // Update position with collision detection
         const nextX = this.position.x + this.velocity.x
         if (nextX >= 0 && nextX <= canvas.width - this.width) {
             this.position.x = nextX
@@ -198,7 +227,6 @@ class Fighter extends Sprite {
             this.velocity.y += gravity
         }
 
-        // Recovery and stun timer updates
         if (this.hitTimer > 0) this.hitTimer -= 0.1
         if (this.recoveryTime > 0) {
             this.recoveryTime--
@@ -209,16 +237,21 @@ class Fighter extends Sprite {
     }
 
     updateAttackBox() {
-        // Update attack box position based on direction character is facing
-        const facing = this.velocity.x >= 0 ? 1 : -1
-        this.attackBox.position.x = this.position.x + (facing === 1 ? this.attackBox.offset.x : -this.attackBox.width - this.attackBox.offset.x)
+        if (this === enemy) {
+            // Enemy faces left when player is on the left
+            const facing = this.position.x > player.position.x ? -1 : 1
+            this.attackBox.position.x = this.position.x + (facing === 1 ? this.attackBox.offset.x : -this.attackBox.width - this.attackBox.offset.x)
+        } else {
+            // Original player logic
+            const facing = this.velocity.x >= 0 ? 1 : -1
+            this.attackBox.position.x = this.position.x + (facing === 1 ? this.attackBox.offset.x : -this.attackBox.width - this.attackBox.offset.x)
+        }
         this.attackBox.position.y = this.position.y + this.attackBox.offset.y
     }
 
     updateAnimation() {
         this.animateFrames()
 
-        // Determine current animation based on state
         if (this.velocity.y < 0) {
             this.switchSprite('jump')
         } else if (this.velocity.y > 0) {
@@ -230,8 +263,37 @@ class Fighter extends Sprite {
         }
     }
 
+    performAIAction(player) {
+        if (this === enemy && !this.dead) {
+            const distanceToPlayer = Math.abs(this.position.x - player.position.x)
+            const isPlayerInRange = distanceToPlayer < 200
+            
+            if (!this.isAttacking && !this.stunned) {
+                if (distanceToPlayer > 150) {
+                    this.velocity.x = this.position.x > player.position.x ? -3 : 3
+                    this.switchSprite('run')
+                } else if (distanceToPlayer < 100) {
+                    this.velocity.x = this.position.x > player.position.x ? 3 : -3
+                    this.switchSprite('run')
+                } else {
+                    this.velocity.x = 0
+                    this.switchSprite('idle')
+                }
+            }
+
+            if (isPlayerInRange && !this.isAttacking && !this.stunned) {
+                if (Math.random() < 0.03) {
+                    if (Math.random() < 0.7) {
+                        this.attack()
+                    } else {
+                        this.specialAttack()
+                    }
+                }
+            }
+        }
+    }
+
     switchSprite(sprite) {
-        // Don't interrupt these animations
         if (this.dead) return
         
         if (
@@ -249,7 +311,6 @@ class Fighter extends Sprite {
             this.framesCurrent < this.sprites.takeHit.framesMax - 1
         ) return
 
-        // Switch to the requested sprite if it exists and is different
         if (this.sprites[sprite] && this.image !== this.sprites[sprite].image) {
             this.image = this.sprites[sprite].image
             this.framesMax = this.sprites[sprite].framesMax

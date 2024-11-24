@@ -73,7 +73,7 @@ const player = new Fighter({
         },
         attack1: {
             imgSrc: '/sprites/player/attack1.png',
-            framesMax: 5
+            framesMax: 4
         },
         attack2: {
             imgSrc: '/sprites/player/attack2.png',
@@ -99,30 +99,58 @@ const player = new Fighter({
 });
 
 const enemy = new Fighter({
-    position: { x: 1100, y: groundLevel - 150 },
+    position: { x: 700, y: groundLevel - 150 },
     velocity: { x: 0, y: 0 },
-    offset: { x: -80, y: 0 },
+    color: 'blue',
     imgSrc: '/sprites/enemy/oidle.png',
     scale: 2.5,
     framesMax: 4,
     health: 100,
-    offset:{
-        x: -80 ,
-        y: 63,
+    offset: {
+        x: 215,
+        y: 167
     },
-    sprites:{
-        idle:{
-            imgSrc:'/sprites/enemy/oidle.png',
-            framesMax: 4,
+    sprites: {
+        idle: {
+            imgSrc: '/sprites/enemy/idle.png',
+            framesMax: 4
         },
-        run:{
-            imgSrc:'/sprites/enemy/run.png',
-            framesMax:8,
+        run: {
+            imgSrc: '/sprites/enemy/run.png',
+            framesMax: 7
         },
-        jump:{
-            imgSrc:'/sprites/enemy/jump.png',
-            framesMax:9,
+        jump: {
+            imgSrc: '/sprites/enemy/jump.png',
+            framesMax: 3
+        },
+        fall: {
+            imgSrc: '/sprites/enemy/fall.png',
+            framesMax: 3
+        },
+        attack1: {
+            imgSrc: '/sprites/enemy/attack1.png',
+            framesMax: 4
+        },
+        attack2: {
+            imgSrc: '/sprites/enemy/attack2.png',
+            framesMax: 4
+        },
+        takeHit: {
+            imgSrc: '/sprites/enemy/takeHit.png',
+            framesMax: 1
+        },
+        death: {
+            imgSrc: '/sprites/enemy/death.png',
+            framesMax: 6
         }
+    },
+    attackBox: {
+        offset: {
+            x: -170,
+            y: 50
+        },
+        width: 170,
+        height: 50
     }
 });
 const {position, velocity, color, offset, health, imgSrc, framesMax} = enemy;
