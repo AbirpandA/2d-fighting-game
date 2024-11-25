@@ -101,8 +101,8 @@ class Fighter extends Sprite {
         this.lastAttackTime = 0
         this.comboCount = 0
         this.recoveryTime = 0
-        this.attackCooldown = 1000
-        this.specialCooldown = 1500
+        this.attackCooldown = 1300
+        this.specialCooldown = 1700
         this.canAttack = true
         this.canSpecialAttack = true
         this.sprites = sprites
@@ -214,7 +214,7 @@ specialAttack() {
             this.image === this.sprites.attack1?.image || 
             this.image === this.sprites.attack2?.image
         ) {
-            frameHoldValue = 7 // slightly slower attack animations
+            frameHoldValue = 10 // slightly slower attack animations
         }
 
         this.framesHold = frameHoldValue
@@ -437,7 +437,7 @@ decideAttack() {
         performDefensiveMoves() {
             if (this.player.isAttacking && Math.random() < 0.3) {
                 this.enemy.velocity.y = -8;  // Quick jump
-                this.enemy.velocity.x *= -1.5;  // Reverse direction
+                this.enemy.velocity.x *= -1.8;  // Reverse direction
             }
 
             if (this.enemy.position.x <= 50 || this.enemy.position.x >= canvas.width - 100) {
@@ -463,7 +463,7 @@ decideAttack() {
     aiBehavior.performDefensiveMoves();
 
     // Velocity clamping
-    const maxVelocity = 4;
+    const maxVelocity = 2;
     this.velocity.x = Math.max(Math.min(this.velocity.x, maxVelocity), -maxVelocity);
 }
     
