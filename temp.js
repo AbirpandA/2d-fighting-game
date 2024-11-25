@@ -7,20 +7,18 @@ const groundLevel = canvas.height - 93;
 const backgroundImage = new Image();
 let showBackground = true; // Controls background display
 backgroundImage.src = 'bgsprite.gif';
-const gameStory = `In a bygone era, twin brothers Armov and Mrio pledged their souls to knighthood,
- bound by blood and honor. But fate's cruel hand tore them asunder.
+const gameStory = `"Once, Elyas and Kael were inseparable—twins bound by blood, 
+their souls forged in the fires of shared dreams. Elyas, a Dark Knight, once basked in glory, 
+but the hollow echo of fame consumed him. He left, casting aside his title, wandering into the endless night in search of meaning. 
+Kael, forever chasing what Elyas had abandoned, fell into the abyss, embracing the very shadows his brother had feared.
 
-Armov, the unforeseen champion, donned the Dark Knight's armor, feared by all. Mrio,
- consumed by the very shadows that once united them, forged a rebellion against the crown.
+Time brought them back to this moment. Two brothers, now strangers, locked in a battle not of choice but of fate. 
+Elyas saw a reflection of his lost self in Kael’s eyes, while Kael’s sorrow was a mirror of the brother he had lost.
 
-Time etched their legend in sorrow and steel. The day of reckoning dawned, as brother faced brother, sword against sword.
+Their blades clashed not in rage, but in grief. Neither could win, for their victory would only deepen the wound. 
+Two hearts, forever shattered, their bond broken beyond repair.
 
-A bond once unbreakable now lay shattered, lost to the abyss of ambition and envy. 
-Armov beheld the brother he once knew, now a specter of darkness. Mrio gazed upon the glory that had slipped through his grasp.
-
-Their blades clashed, forging a destiny forged in sorrow. Only one would rise, the other forever lost to the annals of time.
-
-Press 'Enter' to witness the shattered dreams of two brothers, forever entwined in a tale of sorrow and steel."
+**Press 'Enter' to witness the tragic end of two souls, forever entwined in sorrow.**"
 `;
 
 const gamemusic = new Audio('sprites/echoes.mp3');
@@ -90,7 +88,7 @@ const player = new Fighter({
     },
     attackBox: {
         offset: {
-            x: 100,
+            x: 150,
             y: 50
         },
         width: 100,
@@ -282,6 +280,7 @@ function animate() {
     if (gamemusic.paused) {
         gamemusic.play();
     }
+    
 
     window.animationFrameId = window.requestAnimationFrame(animate);
     c.clearRect(0, 0, canvas.width, canvas.height);
@@ -305,56 +304,59 @@ function animate() {
     }
 
     // Improved attack collision detection
-    if (
-        player.isAttacking || player.isSpecialAttacking &&
-        rectangularCollision({
-            rectangle1: {
-                ...player.attackBox,
-                width: player.attackBox.width,
-                height: player.attackBox.height
-            },
-            rectangle2: {
-                ...enemy,
-                width: enemy.width,
-                height: enemy.height
-            }
-        })
-    ) {
-        if (player.currentAttack === 'special') {
-            enemy.takeDamage(20);
-        } else {
-            enemy.takeDamage(10);
+    // Improved attack collision detection for player
+if (
+    (player.isAttacking || player.isSpecialAttacking) &&
+    rectangularCollision({
+        rectangle1: {
+            position: player.attackBox.position,
+            width: player.attackBox.width,
+            height: player.attackBox.height
+        },
+        rectangle2: {
+            position: enemy.position,
+            width: enemy.width,
+            height: enemy.height
         }
-        player.isAttacking = false;
-        player.isSpecialAttacking = false;
-        player.currentAttack = null;
+    }) &&
+    player.attackBox.active  // Ensure attack box is actively engaged
+) {
+    if (player.currentAttack === 'special') {
+        enemy.takeDamage(20);
+    } else {
+        enemy.takeDamage(10);
     }
+    player.isAttacking = false;
+    player.isSpecialAttacking = false;
+    player.currentAttack = null;
+}
 
-    // Enemy attack collision detection
-    if (
-        enemy.isAttacking || enemy.isSpecialAttacking &&
-        rectangularCollision({
-            rectangle1: {
-                ...enemy.attackBox,
-                width: enemy.attackBox.width,
-                height: enemy.attackBox.height
-            },
-            rectangle2: {
-                ...player,
-                width: player.width,
-                height: player.height
-            }
-        })
-    ) {
-        if (enemy.currentAttack === 'special') {
-            player.takeDamage(20);
-        } else {
-            player.takeDamage(10);
+// Similar improved collision detection for enemy
+if (
+    (enemy.isAttacking || enemy.isSpecialAttacking) &&
+    rectangularCollision({
+        rectangle1: {
+            position: enemy.attackBox.position,
+            width: enemy.attackBox.width,
+            height: enemy.attackBox.height
+        },
+        rectangle2: {
+            position: player.position,
+            width: player.width,
+            height: player.height
         }
-        enemy.isAttacking = false;
-        enemy.isSpecialAttacking = false;
-        enemy.currentAttack = null;
+    }) &&
+    enemy.attackBox.active  // Ensure attack box is actively engaged
+) {
+    if (enemy.currentAttack === 'special') {
+        player.takeDamage(20);
+    } else {
+        player.takeDamage(10);
     }
+    enemy.isAttacking = false;
+    enemy.isSpecialAttacking = false;
+    enemy.currentAttack = null;
+}
 
     // Check game over condition
     if (player.health <= 0 || enemy.health <= 0) {

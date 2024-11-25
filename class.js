@@ -33,6 +33,7 @@ class Sprite {
             (this.image.width / this.framesMax) * this.scale,
             this.image.height * this.scale
         )
+        
     }
 
     animateFrames() {
@@ -86,8 +87,9 @@ class Fighter extends Sprite {
                 y: this.position.y
             },
             offset: attackBox.offset,
-            width: attackBox.width || 170,
-            height: attackBox.height || 50
+            width: attackBox.width || 100,
+            height: attackBox.height || 50,
+            active: false  // New property to track active attack state
         }
         
         this.isAttacking = false
@@ -99,12 +101,13 @@ class Fighter extends Sprite {
         this.lastAttackTime = 0
         this.comboCount = 0
         this.recoveryTime = 0
-        this.attackCooldown = 950
+        this.attackCooldown = 1000
         this.specialCooldown = 1500
         this.canAttack = true
         this.canSpecialAttack = true
         this.sprites = sprites
         this.dead = false
+        this.hasUsedAirAttack = false;
         
         this.currentSprite = 'idle'
         this.animationFrame = 0
@@ -117,40 +120,65 @@ class Fighter extends Sprite {
     }
 
     attack() {
-        if (this.stunned || !this.canAttack) return
-        
-        this.isAttacking = true
-        this.currentAttack = 'normal'
-        this.canAttack = false
-        this.switchSprite('attack1')
-        
-        setTimeout(() => {
-            this.isAttacking = false
-            this.currentAttack = null
-        }, 100)
-
-        setTimeout(() => {
-            this.canAttack = true
-        }, this.attackCooldown)
+        // Check for ground attack
+        if (this.velocity.y === 0) {
+            if (this.stunned || !this.canAttack) return;
+            
+            this.isAttacking = true;
+            this.currentAttack = 'normal';
+            this.canAttack = false;
+            this.attackBox.active = true;
+            this.switchSprite('attack1');
+            
+            setTimeout(() => {
+                this.isAttacking = false;
+                this.currentAttack = null;
+                this.attackBox.active = false;
+            }, 100);
+    
+            setTimeout(() => {
+                this.canAttack = true;
+            }, this.attackCooldown);
+        } 
+        // Handle air attack
+        else {
+            // Only allow one air attack
+            if (this.hasUsedAirAttack || this.stunned) return;
+            
+            this.isAttacking = true;
+            this.currentAttack = 'airAttack';
+            this.hasUsedAirAttack = true;
+            this.attackBox.active = true;
+            this.switchSprite('attack1'); // You might want a specific air attack sprite
+            
+            setTimeout(() => {
+                this.isAttacking = false;
+                this.currentAttack = null;
+                this.attackBox.active = false;
+            }, 100);
+        }
     }
 
-    specialAttack() {
-        if (this.stunned || !this.canSpecialAttack) return
-        
-        this.isSpecialAttacking = true
-        this.currentAttack = 'special'
-        this.canSpecialAttack = false
-        this.switchSprite('attack2')
-        
-        setTimeout(() => {
-            this.isSpecialAttacking = false
-            this.currentAttack = null
-        }, 150)
+specialAttack() {
+    // Similar ground-based constraints
+    if (this.stunned || !this.canSpecialAttack || this.velocity.y !== 0) return;
+    
+    this.isSpecialAttacking = true;
+    this.currentAttack = 'special';
+    this.canSpecialAttack = false;
+    this.attackBox.active = true;
+    this.switchSprite('attack2');
+    
+    setTimeout(() => {
+        this.isSpecialAttacking = false;
+        this.currentAttack = null;
+        this.attackBox.active = false;
+    }, 150);
 
-        setTimeout(() => {
-            this.canSpecialAttack = true
-        }, this.specialCooldown)
-    }
+    setTimeout(() => {
+        this.canSpecialAttack = true;
+    }, this.specialCooldown);
+}
 
     takeDamage(damage) {
         if (this.dead) return
@@ -202,14 +230,20 @@ class Fighter extends Sprite {
 
     update() {
         if (!this.dead) {
-            this.updatePosition()
-            this.updateAttackBox()
-            this.updateAnimation()
+            this.updatePosition();
+            this.updateAttackBox();
+            this.updateAnimation();
+            
+            // Reset air attack when touching the ground
+            if (this.position.y + this.height >= groundLevel) {
+                this.hasUsedAirAttack = false;
+            }
+            
             if (this === enemy) {
-                this.performAIAction(player)
+                this.performAIAction(player);
             }
         }
-        this.draw()
+        this.draw();
     }
 
     updatePosition() {
@@ -237,15 +271,41 @@ class Fighter extends Sprite {
     }
 
     updateAttackBox() {
-        if (this === enemy) {
-            // Enemy always faces left
-            this.attackBox.position.x = this.position.x - this.attackBox.width - this.attackBox.offset.x
+    // Determine direction based on player/enemy
+    const isEnemy = this === enemy;
+    const spriteWidth = this.image.width / this.framesMax;
+    
+    // Dynamic attack box sizing based on current sprite and attack type
+    let attackBoxWidth = 100;
+    let attackBoxHeight = 50;
+    
+    // Adjust attack box for different animations
+    if (this.currentSprite === 'attack1' || this.currentSprite === 'attack2') {
+        // Different sizing for ground and air attacks
+        if (this.velocity.y !== 0) {
+            // Air attack specific sizing
+            attackBoxWidth = spriteWidth * 1.2;
+            attackBoxHeight = this.height * 0.4;
         } else {
-            // Player always faces right
-            this.attackBox.position.x = this.position.x + this.attackBox.offset.x
+            // Ground attack sizing
+            attackBoxWidth = spriteWidth * 1.5;
+            attackBoxHeight = this.height * 0.6;
         }
-        this.attackBox.position.y = this.position.y + this.attackBox.offset.y
     }
+    
+    // Positioning logic with explicit offset management
+    if (isEnemy) {
+        // Enemy attack box (facing left)
+        this.attackBox.position.x = this.position.x - attackBoxWidth + this.attackBox.offset.x;
+    } else {
+        // Player attack box (facing right)
+        this.attackBox.position.x = this.position.x + this.width + this.attackBox.offset.x;
+    }
+    
+    this.attackBox.position.y = this.position.y + this.attackBox.offset.y;
+    this.attackBox.width = attackBoxWidth;
+    this.attackBox.height = attackBoxHeight;
+}
     updateAnimation() {
         this.animateFrames()
 
@@ -260,59 +320,139 @@ class Fighter extends Sprite {
         }
     }
 
-    performAIAction(player) {
-         if (this.stunned || this.recoveryTime > 0) {
-            this.recoveryTime--;
-            if (this.recoveryTime <= 0) this.stunned = false;
-            return;
+  performAIAction(player) {
+    class AIBehaviorManager {
+        constructor(enemy, player) {
+            this.enemy = enemy;
+            this.player = player;
+            this.strategyChangeInterval = 0;
+            this.currentStrategy = null;
+            this.strategies = [
+                'aggressive',
+                'defensive',
+                'evasive',
+                'balanced'
+            ];
         }
 
-        const distanceToPlayer = Math.abs(player.position.x - this.position.x);
-        const currentTime = Date.now();
-        const timeSinceLastAttack = currentTime - this.lastAttackTime;
-
-        if (this.health < 30) {
-            if (distanceToPlayer < 150) {
-                if (this.velocity.y === 0 && Math.random() < 0.1) {
-                    this.velocity.y = -15;
-                    this.velocity.x = player.position.x > this.position.x ? -2 : 2;
-                }
-            }
+        calculateDistanceToPlayer() {
+            return Math.abs(this.player.position.x - this.enemy.position.x);
         }
 
-        if (player.stunned || player.recoveryTime > 0) {
-            if (distanceToPlayer < 120 && timeSinceLastAttack > 500) {
-                if (Math.random() < 0.7) {
-                    this.attack();
-                    this.lastAttackTime = currentTime;
-                }
+        determineStrategy() {
+            this.strategyChangeInterval++;
+
+            if (this.strategyChangeInterval > 180) {
+                this.currentStrategy = this.strategies[
+                    Math.floor(Math.random() * this.strategies.length)
+                ];
+                this.strategyChangeInterval = 0;
             }
+
+            return this.currentStrategy;
         }
 
-        if (distanceToPlayer < 150) {
-            if (timeSinceLastAttack > 800) {
-                if (Math.random() < 0.15) {
-                    this.specialAttack();
-                    this.lastAttackTime = currentTime;
-                } else if (Math.random() < 0.3) {
-                    this.attack();
-                    this.lastAttackTime = currentTime;
-                }
-            }
-        } else if (distanceToPlayer < 300) {
-            const approachSpeed = 1 + (Math.random() * 0.5);
-            this.velocity.x = player.position.x > this.position.x ? approachSpeed : -approachSpeed;
-            
-            if (this.velocity.y === 0 && Math.random() < 0.05) {
-                this.velocity.y = -12;
-            }
-        } else {
-            this.velocity.x = player.position.x > this.position.x ? 2 : -2;
-        }
+      moveIntelligently() {
+    const distance = this.calculateDistanceToPlayer();
+    const facingRight = this.player.position.x > this.enemy.position.x;
+    const playerAttackBox = this.player.attackBox;
+    const playerAttackRange = playerAttackBox.position.x + playerAttackBox.width; // Right edge of player's attack box
+    const enemyAttackBox = this.enemy.attackBox;
+    const enemyAttackRange = this.enemy.position.x; // Left edge of enemy's attack box
 
-        if (this.position.x < 50) this.velocity.x = 1;
-        if (this.position.x > canvas.width - 100) this.velocity.x = -1;
+    // Optimal engagement distance
+    const minEngageDistance = 100;
+    const maxEngageDistance = 300;
+
+    // Always face the player
+    const moveDirection = facingRight ? 1 : -1;
+
+    // Check if the enemy is within the player's attack range
+    if (facingRight && enemyAttackRange < playerAttackRange) {
+        // Move towards the player until reaching the attack range
+        this.enemy.velocity.x = 3 * moveDirection;
+    } else if (!facingRight && enemyAttackRange > playerAttackRange) {
+        // Move towards the player until reaching the attack range
+        this.enemy.velocity.x = -3 * moveDirection;
+    } else {
+        // If within attack range, stop moving
+        this.enemy.velocity.x = 0;
     }
+
+    // Additional engagement logic
+    if (distance > maxEngageDistance) {
+        // Chase aggressively when too far
+        this.enemy.velocity.x = 4 * moveDirection;
+    } else if (distance < minEngageDistance) {
+        // Slight repositioning when too close
+        this.enemy.velocity.x = -2 * moveDirection;
+    } else {
+        // If within engage distance but not attacking, slow down
+        this.enemy.velocity.x *= 0.5; // Slow down to prevent overshooting
+    }
+
+    // Edge case handling to prevent getting stuck
+    if (this.enemy.position.x <= 0 || this.enemy.position.x >= canvas.width - this.enemy.width) {
+        this.enemy.velocity.x *= -1; // Reverse direction if hitting the edge
+    }
+}
+
+decideAttack() {
+    const distance = this.calculateDistanceToPlayer();
+    const playerHealth = this.player.health;
+    const enemyHealth = this.enemy.health;
+
+    const shouldSpecialAttack = 
+        distance < 200 &&  
+        (playerHealth / enemyHealth > 1.5 || Math.random() < 0.2);
+
+    const shouldNormalAttack = 
+        distance < 250 &&  
+        Math.random() < 0.4;
+
+    // Add a condition to check if the enemy is not stunned or recovering before attacking
+    if (!this.enemy.stunned && !this.enemy.recoveryTime) {
+        if (shouldSpecialAttack && this.enemy.canSpecialAttack) {
+            this.enemy.specialAttack();
+        } else if (shouldNormalAttack && this.enemy.canAttack) {
+            this.enemy.attack();
+        }
+    }
+}
+
+        performDefensiveMoves() {
+            if (this.player.isAttacking && Math.random() < 0.3) {
+                this.enemy.velocity.y = -8;  // Quick jump
+                this.enemy.velocity.x *= -1.5;  // Reverse direction
+            }
+
+            if (this.enemy.position.x <= 50 || this.enemy.position.x >= canvas.width - 100) {
+                this.enemy.velocity.x *= -1.5;
+            }
+        }
+    }
+
+    // Initialize and execute advanced AI
+    const aiBehavior = new AIBehaviorManager(this, player);
+    
+    // Skip AI if stunned or recovering
+    if (this.stunned || this.recoveryTime > 0) {
+        this.recoveryTime--;
+        this.velocity.x = 0;
+        return;
+    }
+
+    // Core AI Decision Loop
+    const strategy = aiBehavior.determineStrategy();
+    aiBehavior.moveIntelligently();
+    aiBehavior.decideAttack();
+    aiBehavior.performDefensiveMoves();
+
+    // Velocity clamping
+    const maxVelocity = 4;
+    this.velocity.x = Math.max(Math.min(this.velocity.x, maxVelocity), -maxVelocity);
+}
+    
     switchSprite(sprite) {
         if (this.dead) return
         
@@ -340,9 +480,10 @@ class Fighter extends Sprite {
 }
 function rectangularCollision({ rectangle1, rectangle2 }) {
     return (
-        rectangle1.position.x + rectangle1.width >= rectangle2.position.x &&
-        rectangle1.position.x <= rectangle2.position.x + rectangle2.width &&
-        rectangle1.position.y + rectangle1.height >= rectangle2.position.y &&
-        rectangle1.position.y <= rectangle2.position.y + rectangle2.height
+        rectangle1.position.x < rectangle2.position.x + rectangle2.width &&
+        rectangle1.position.x + rectangle1.width > rectangle2.position.x &&
+        rectangle1.position.y < rectangle2.position.y + rectangle2.height &&
+        rectangle1.position.y + rectangle1.height > rectangle2.position.y
     );
 }
+
