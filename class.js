@@ -361,7 +361,7 @@ specialAttack() {
     const enemyAttackRange = this.enemy.position.x; // Left edge of enemy's attack box
 
     // Optimal engagement distance
-    const minEngageDistance = 100;
+    const minEngageDistance = 150;
     const maxEngageDistance = 300;
 
     // Always face the player
@@ -402,20 +402,34 @@ decideAttack() {
     const playerHealth = this.player.health;
     const enemyHealth = this.enemy.health;
 
+    // More aggressive attack conditions
     const shouldSpecialAttack = 
-        distance < 200 &&  
-        (playerHealth / enemyHealth > 1.5 || Math.random() < 0.2);
+        distance < 250 &&  // Increased range for special attack
+        (
+            playerHealth / enemyHealth > 1.5 ||  // When player is significantly healthier
+            playerHealth < 30 ||  // When player's health is low
+            Math.random() < 0.3   // Increased chance of special attack
+        );
 
     const shouldNormalAttack = 
-        distance < 250 &&  
-        Math.random() < 0.4;
+        distance < 300 &&  // Wider attack range
+        Math.random() < 0.6;  // Increased attack frequency (60% chance)
 
-    // Add a condition to check if the enemy is not stunned or recovering before attacking
+    // Combo potential: If last attack was successful, increase aggression
+    const recentlyHitPlayer = this.enemy.lastAttackTime > 0;
+
+    // Add more dynamic attack decision
     if (!this.enemy.stunned && !this.enemy.recoveryTime) {
         if (shouldSpecialAttack && this.enemy.canSpecialAttack) {
             this.enemy.specialAttack();
-        } else if (shouldNormalAttack && this.enemy.canAttack) {
-            this.enemy.attack();
+        } 
+        
+        // If special attack fails, immediately follow up with normal attack
+        else if (shouldNormalAttack && this.enemy.canAttack) {
+            // Increased likelihood of consecutive attacks
+            if (recentlyHitPlayer || Math.random() < 0.4) {
+                this.enemy.attack();
+            }
         }
     }
 }
