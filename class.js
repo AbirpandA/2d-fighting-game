@@ -370,10 +370,10 @@ specialAttack() {
     // Check if the enemy is within the player's attack range
     if (facingRight && enemyAttackRange < playerAttackRange) {
         // Move towards the player until reaching the attack range
-        this.enemy.velocity.x = 3 * moveDirection;
+        this.enemy.velocity.x = 4 * moveDirection;
     } else if (!facingRight && enemyAttackRange > playerAttackRange) {
         // Move towards the player until reaching the attack range
-        this.enemy.velocity.x = -3 * moveDirection;
+        this.enemy.velocity.x = -4 * moveDirection;
     } else {
         // If within attack range, stop moving
         this.enemy.velocity.x = 0;
