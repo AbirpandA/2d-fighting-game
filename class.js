@@ -99,7 +99,7 @@ class Fighter extends Sprite {
         this.lastAttackTime = 0
         this.comboCount = 0
         this.recoveryTime = 0
-        this.attackCooldown = 500
+        this.attackCooldown = 950
         this.specialCooldown = 1500
         this.canAttack = true
         this.canSpecialAttack = true
@@ -238,17 +238,14 @@ class Fighter extends Sprite {
 
     updateAttackBox() {
         if (this === enemy) {
-            // Enemy faces left when player is on the left
-            const facing = this.position.x > player.position.x ? -1 : 1
-            this.attackBox.position.x = this.position.x + (facing === 1 ? this.attackBox.offset.x : -this.attackBox.width - this.attackBox.offset.x)
+            // Enemy always faces left
+            this.attackBox.position.x = this.position.x - this.attackBox.width - this.attackBox.offset.x
         } else {
-            // Original player logic
-            const facing = this.velocity.x >= 0 ? 1 : -1
-            this.attackBox.position.x = this.position.x + (facing === 1 ? this.attackBox.offset.x : -this.attackBox.width - this.attackBox.offset.x)
+            // Player always faces right
+            this.attackBox.position.x = this.position.x + this.attackBox.offset.x
         }
         this.attackBox.position.y = this.position.y + this.attackBox.offset.y
     }
-
     updateAnimation() {
         this.animateFrames()
 
@@ -264,35 +261,58 @@ class Fighter extends Sprite {
     }
 
     performAIAction(player) {
-        if (this === enemy && !this.dead) {
-            const distanceToPlayer = Math.abs(this.position.x - player.position.x)
-            const isPlayerInRange = distanceToPlayer < 200
-            
-            if (!this.isAttacking && !this.stunned) {
-                if (distanceToPlayer > 150) {
-                    this.velocity.x = this.position.x > player.position.x ? -3 : 3
-                    this.switchSprite('run')
-                } else if (distanceToPlayer < 100) {
-                    this.velocity.x = this.position.x > player.position.x ? 3 : -3
-                    this.switchSprite('run')
-                } else {
-                    this.velocity.x = 0
-                    this.switchSprite('idle')
-                }
-            }
+         if (this.stunned || this.recoveryTime > 0) {
+            this.recoveryTime--;
+            if (this.recoveryTime <= 0) this.stunned = false;
+            return;
+        }
 
-            if (isPlayerInRange && !this.isAttacking && !this.stunned) {
-                if (Math.random() < 0.03) {
-                    if (Math.random() < 0.7) {
-                        this.attack()
-                    } else {
-                        this.specialAttack()
-                    }
+        const distanceToPlayer = Math.abs(player.position.x - this.position.x);
+        const currentTime = Date.now();
+        const timeSinceLastAttack = currentTime - this.lastAttackTime;
+
+        if (this.health < 30) {
+            if (distanceToPlayer < 150) {
+                if (this.velocity.y === 0 && Math.random() < 0.1) {
+                    this.velocity.y = -15;
+                    this.velocity.x = player.position.x > this.position.x ? -2 : 2;
                 }
             }
         }
-    }
 
+        if (player.stunned || player.recoveryTime > 0) {
+            if (distanceToPlayer < 120 && timeSinceLastAttack > 500) {
+                if (Math.random() < 0.7) {
+                    this.attack();
+                    this.lastAttackTime = currentTime;
+                }
+            }
+        }
+
+        if (distanceToPlayer < 150) {
+            if (timeSinceLastAttack > 800) {
+                if (Math.random() < 0.15) {
+                    this.specialAttack();
+                    this.lastAttackTime = currentTime;
+                } else if (Math.random() < 0.3) {
+                    this.attack();
+                    this.lastAttackTime = currentTime;
+                }
+            }
+        } else if (distanceToPlayer < 300) {
+            const approachSpeed = 1 + (Math.random() * 0.5);
+            this.velocity.x = player.position.x > this.position.x ? approachSpeed : -approachSpeed;
+            
+            if (this.velocity.y === 0 && Math.random() < 0.05) {
+                this.velocity.y = -12;
+            }
+        } else {
+            this.velocity.x = player.position.x > this.position.x ? 2 : -2;
+        }
+
+        if (this.position.x < 50) this.velocity.x = 1;
+        if (this.position.x > canvas.width - 100) this.velocity.x = -1;
+    }
     switchSprite(sprite) {
         if (this.dead) return
         
@@ -317,4 +337,12 @@ class Fighter extends Sprite {
             this.framesCurrent = 0
         }
     }
+}
+function rectangularCollision({ rectangle1, rectangle2 }) {
+    return (
+        rectangle1.position.x + rectangle1.width >= rectangle2.position.x &&
+        rectangle1.position.x <= rectangle2.position.x + rectangle2.width &&
+        rectangle1.position.y + rectangle1.height >= rectangle2.position.y &&
+        rectangle1.position.y <= rectangle2.position.y + rectangle2.height
+    );
 }

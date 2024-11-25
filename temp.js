@@ -93,7 +93,7 @@ const player = new Fighter({
             x: 100,
             y: 50
         },
-        width: 170,
+        width: 100,
         height: 50
     }
 });
@@ -137,7 +137,7 @@ const enemy = new Fighter({
         },
         takeHit: {
             imgSrc: '/sprites/enemy/takeHit.png',
-            framesMax: 1
+            framesMax: 2
         },
         death: {
             imgSrc: '/sprites/enemy/death.png',
@@ -149,7 +149,7 @@ const enemy = new Fighter({
             x: -170,
             y: 50
         },
-        width: 170,
+        width: 100,
         height: 50
     }
 });
@@ -243,10 +243,40 @@ function gameOverScreen() {
         displayMessage("Victory but at what cost,Brother Fallen. Glory Empty.Press 'R' to Restart", 'green');
     }
 }
+function resetGame() {
+    // Reset player
+    player.position = { x: 50, y: groundLevel - 150 }
+    player.velocity = { x: 0, y: 0 }
+    player.health = 100
+    player.dead = false
+    player.switchSprite('idle')
+
+    // Reset enemy
+    enemy.position = { x: 700, y: groundLevel - 150 }
+    enemy.velocity = { x: 0, y: 0 }
+    enemy.health = 100
+    enemy.dead = false
+    enemy.switchSprite('idle')
+
+    // Reset game state
+    gameOver = false
+    gameStarted = true
+    showBackground = true
+    
+    // Reset music
+    gamemusic.currentTime = 0
+    gamemusic.play()
+
+    // Restart animation
+    if (window.animationFrameId) {
+        cancelAnimationFrame(window.animationFrameId)
+    }
+    animate()
+}
+
 
 
 // Main game loop
-// Update the animation loop to store the animation frame ID
 function animate() {
     if (!gameStarted) return;
     if (gamemusic.paused) {
@@ -255,51 +285,74 @@ function animate() {
 
     window.animationFrameId = window.requestAnimationFrame(animate);
     c.clearRect(0, 0, canvas.width, canvas.height);
-
     
-
-     // Draw the background image
-    c.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height); // This will ensure the background is drawn
+    c.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
     
-
     drawHealthBars();
 
     player.update();
     enemy.update();
 
-    // Player movement handling with improved control
-    player.velocity.x = 0; // Reset velocity before checking keys
-    if (keys.d.pressed){ 
-        player.velocity.x = 3
-        player.switchSprite('run')
-
-    };
+    // Player movement handling
+    player.velocity.x = 0;
+    if (keys.d.pressed) {
+        player.velocity.x = 3;
+        player.switchSprite('run');
+    }
     if (keys.a.pressed) {
-        player.velocity.x = -3
-        player.switchSprite('run')    
-    };
+        player.velocity.x = -3;
+        player.switchSprite('run');
+    }
 
-    // Check for player hitting enemy
+    // Improved attack collision detection
     if (
-        player.currentAttack &&
-        player.attackbox.position.x + player.attackbox.width >= enemy.position.x &&
-        player.attackbox.position.x <= enemy.position.x + enemy.width &&
-        player.attackbox.position.y + player.attackbox.height >= enemy.position.y &&
-        player.attackbox.position.y <= enemy.position.y + enemy.height
+        player.isAttacking || player.isSpecialAttacking &&
+        rectangularCollision({
+            rectangle1: {
+                ...player.attackBox,
+                width: player.attackBox.width,
+                height: player.attackBox.height
+            },
+            rectangle2: {
+                ...enemy,
+                width: enemy.width,
+                height: enemy.height
+            }
+        })
     ) {
-        enemy.takeDamage(player.currentAttack === 'special' ? 20 : 10);
+        if (player.currentAttack === 'special') {
+            enemy.takeDamage(20);
+        } else {
+            enemy.takeDamage(10);
+        }
+        player.isAttacking = false;
+        player.isSpecialAttacking = false;
         player.currentAttack = null;
     }
 
-    // Check for enemy hitting player
+    // Enemy attack collision detection
     if (
-        enemy.currentAttack &&
-        enemy.attackbox.position.x + enemy.attackbox.width >= player.position.x &&
-        enemy.attackbox.position.x <= player.position.x + player.width &&
-       enemy.attackbox.position.y +enemy.attackbox.height >= player.position.y &&
-       enemy.attackbox.position.y <= player.position.y + player.height
+        enemy.isAttacking || enemy.isSpecialAttacking &&
+        rectangularCollision({
+            rectangle1: {
+                ...enemy.attackBox,
+                width: enemy.attackBox.width,
+                height: enemy.attackBox.height
+            },
+            rectangle2: {
+                ...player,
+                width: player.width,
+                height: player.height
+            }
+        })
     ) {
-        player.takeDamage(enemy.currentAttack === 'special' ? 20 : 10);
+        if (enemy.currentAttack === 'special') {
+            player.takeDamage(20);
+        } else {
+            player.takeDamage(10);
+        }
+        enemy.isAttacking = false;
+        enemy.isSpecialAttacking = false;
         enemy.currentAttack = null;
     }
 
@@ -311,53 +364,6 @@ function animate() {
     }
 
     enemy.performAIAction(player);
-}
-
-// Reset game to initial state with complete state clearing
-function resetGame() {
-    // Reset game state flags
-    gameOver = false;
-    gameStarted = false;
-    playerHit = false;
-
-    // Reset all key states
-    keys.a.pressed = false;
-    keys.d.pressed = false;
-    keys.w.pressed = false;
-
-    // Reset player state completely
-    player.health = 100;
-    player.position = { x: 50, y: 0 };
-    player.velocity = { x: 0, y: 0 };
-    player.isAttacking = false;
-    player.isSpecialAttacking = false;
-    player.currentAttack = null;
-    player.hitTimer = 0;
-    player.stunned = false;
-    player.lastAttackTime = 0;
-    player.comboCount = 0;
-    player.recoveryTime = 0;
-
-    // Reset enemy state completely
-    enemy.health = 100;
-    enemy.position = { x: 700, y: 0 };
-    enemy.velocity = { x: 0, y: 0 };
-    enemy.isAttacking = false;
-    enemy.isSpecialAttacking = false;
-    enemy.currentAttack = null;
-    enemy.hitTimer = 0;
-    enemy.stunned = false;
-    enemy.lastAttackTime = 0;
-    enemy.comboCount = 0;
-    enemy.recoveryTime = 0;
-
-    // Clear any existing animation frame before starting new one
-    if (window.animationFrameId) {
-        cancelAnimationFrame(window.animationFrameId);
-    }
-
-    // Show the start screen
-    gameStart();
 }
 
 // Handle keyboard input
