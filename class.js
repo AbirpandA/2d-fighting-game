@@ -101,8 +101,8 @@ class Fighter extends Sprite {
         this.lastAttackTime = 0
         this.comboCount = 0
         this.recoveryTime = 0
-        this.attackCooldown = 1300
-        this.specialCooldown = 1700
+        this.attackCooldown = 1000
+        this.specialCooldown = 1500
         this.canAttack = true
         this.canSpecialAttack = true
         this.sprites = sprites
