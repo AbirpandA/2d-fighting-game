@@ -214,7 +214,7 @@ specialAttack() {
             this.image === this.sprites.attack1?.image || 
             this.image === this.sprites.attack2?.image
         ) {
-            frameHoldValue = 8 // slightly slower attack animations
+            frameHoldValue = 7 // slightly slower attack animations
         }
 
         this.framesHold = frameHoldValue
