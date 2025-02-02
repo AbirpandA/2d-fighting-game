@@ -149,7 +149,7 @@ class Fighter extends Sprite {
             this.currentAttack = 'airAttack';
             this.hasUsedAirAttack = true;
             this.attackBox.active = true;
-            this.switchSprite('attack1'); // You might want a specific air attack sprite
+            this.switchSprite('attack1'); 
             
             setTimeout(() => {
                 this.isAttacking = false;
@@ -203,7 +203,7 @@ specialAttack() {
     animateFrames() {
         this.framesElapsed++
 
-        // Adjust animation speed based on action
+        //  animation speed based on action
         let frameHoldValue = 5 // default speed
 
         if (this.image === this.sprites.jump?.image) {

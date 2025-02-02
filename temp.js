@@ -44,7 +44,7 @@ const player = new Fighter({
     velocity: { x: 0, y: 0 },
     color: 'red',
     
-    imgSrc: '/sprites/player/idle.png', // Add your player sprite path here
+    imgSrc: '/sprites/player/idle.png',
     scale: 2.5,
     framesMax: 6,
     health: 100,
@@ -304,7 +304,6 @@ function animate() {
     }
 
     // Improved attack collision detection
-    // Improved attack collision detection for player
 if (
     (player.isAttacking || player.isSpecialAttacking) &&
     rectangularCollision({
@@ -319,7 +318,7 @@ if (
             height: enemy.height
         }
     }) &&
-    player.attackBox.active  // Ensure attack box is actively engaged
+    player.attackBox.active  // Ensures attack box is actively engaged
 ) {
     if (player.currentAttack === 'special') {
         enemy.takeDamage(20);
@@ -346,7 +345,7 @@ if (
             height: player.height
         }
     }) &&
-    enemy.attackBox.active  // Ensure attack box is actively engaged
+    enemy.attackBox.active // Ensures attack box is actively engaged
 ) {
     if (enemy.currentAttack === 'special') {
         player.takeDamage(20);
@@ -402,7 +401,7 @@ window.addEventListener('keyup', (event) => {
         keys.d.pressed = false;
     }
     if (event.key === 'a') {
-        keys.a.pressed = false; // Fixed from previous incorrect d.pressed
+        keys.a.pressed = false; 
     }
     if (event.key === 'w') {
         keys.w.pressed = false;
